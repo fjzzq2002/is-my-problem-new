@@ -18,9 +18,12 @@ except:
     print('Cannot find scrapped problems')
 scrapped_uids = set(p['uid'] for p in scrapped_problems)
 
-codeforces_endpoint = 'https://codeforces.com/api/problemset.problems'
+#codeforces_endpoint = 'https://codeforces.com/api/problemset.problems'
 # get list of problems
-list_problems = requests.get(codeforces_endpoint).json()['result']['problems']
+#list_problems = requests.get(codeforces_endpoint).json()['result']['problems']
+# the website is down, read problems.txt instead
+with open('problems.txt') as f:
+    list_problems = json.load(f)['result']['problems']
 print('# problems:',len(list_problems))
 
 # https://stackoverflow.com/a/66835172
@@ -45,7 +48,7 @@ def get_text(tag: bs4.Tag) -> str:
 # a scrapper for codeforces
 def scrap_problem(contestId, index, rating, tags, uid):
     url = f'https://codeforces.com/contest/{contestId}/problem/{index}'
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     soup = BeautifulSoup(response.content, 'html.parser')
     statement = soup.find(class_='problem-statement')
     try:
@@ -69,7 +72,7 @@ def scrap_problem(contestId, index, rating, tags, uid):
     return problem
 
 for problem in tqdm(list_problems):
-    contestId, index, rating, tags = problem['contestId'], problem['index'], problem['rating'], problem['tags']
+    contestId, index, rating, tags = problem['contestId'], problem['index'], problem.get('rating',-1), problem['tags']
     uid = f'Codeforces{contestId}{index}'
     if uid in scrapped_uids:
         continue
@@ -81,6 +84,10 @@ for problem in tqdm(list_problems):
         print('Error while scrapping:', e)
     if result is not None:
         scrapped_problems.append(result)
-    time.sleep(0.3)
-    # save it to file
-    dump_json_safe(scrapped_problems, 'problems/codeforces.json')
+    time.sleep(0.1)
+    # save to file every 10 problems
+    import random
+    if random.random()<0.1:
+        dump_json_safe(scrapped_problems, 'problems/codeforces.json')
+
+dump_json_safe(scrapped_problems, 'problems/codeforces.json')
