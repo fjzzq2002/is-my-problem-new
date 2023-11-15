@@ -8,5 +8,6 @@ Each file (e.g. `codeforces.json`) contains an array of problems. Each problem h
 - `statement`: The original problem statement scrapped.
   - Use single $ to represent inline math, and double $$ to represent block math.
 - `processed`: Processed problem statements.
-  - For each summarization, there are two fields: `prompt_md5` and `result`.
+  - For each summarization, there are three fields: `prompt_md5`, `template_md5` and `result`.
   - `prompt_md5` is the md5 of the exact prompt sent to openai.
+  - `template_md5` is the md5 of the prompt template.
