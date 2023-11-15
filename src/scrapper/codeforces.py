@@ -18,12 +18,12 @@ except:
     print('Cannot find scrapped problems')
 scrapped_uids = set(p['uid'] for p in scrapped_problems)
 
-#codeforces_endpoint = 'https://codeforces.com/api/problemset.problems'
+codeforces_endpoint = 'https://codeforces.com/api/problemset.problems'
 # get list of problems
-#list_problems = requests.get(codeforces_endpoint).json()['result']['problems']
+list_problems = requests.get(codeforces_endpoint).json()['result']['problems']
 # the website is down, read problems.txt instead
-with open('problems.txt') as f:
-    list_problems = json.load(f)['result']['problems']
+# with open('problems.txt') as f:
+#     list_problems = json.load(f)['result']['problems']
 print('# problems:',len(list_problems))
 
 # https://stackoverflow.com/a/66835172

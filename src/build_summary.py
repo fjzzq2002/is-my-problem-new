@@ -19,17 +19,25 @@ client = AsyncOpenAI(
     api_key=settings['OPENAI_API_KEY'],
 )
 
+def check_processed(p,template):
+    ORIGINAL = '\n'+p['statement']+'\n'
+    prompt = template.replace('[[ORIGINAL]]',ORIGINAL).strip()
+    prompt_md5 = hashlib.md5(prompt.encode('utf-8')).hexdigest()
+    for f in p['processed']:
+        if f['prompt_md5'] == prompt_md5:
+            return True
+    return False
 
 async def process(p,template):
     ORIGINAL = '\n'+p['statement']+'\n'
     prompt = template.replace('[[ORIGINAL]]',ORIGINAL).strip()
     template_md5 = hashlib.md5(template.encode('utf-8')).hexdigest()
     prompt_md5 = hashlib.md5(prompt.encode('utf-8')).hexdigest()
-    alreday_processed = False
+    already_processed = False
     for f in p['processed']:
         if f['prompt_md5'] == prompt_md5:
-            alreday_processed = True
-    if alreday_processed:
+            already_processed = True
+    if already_processed:
         return
     #print(prompt, prompt_md5)
     #print(num_tokens_from_string(prompt))
@@ -65,15 +73,19 @@ async def process_all_problems():
     for problems_file in problems_filenames():
         problems = read_problems('problems/'+problems_file)
         tasks = []
-        batch_size = 15
-        for i in range(0, len(problems), batch_size):
-            batch = problems[i:i+batch_size]
-            for template in settings['TEMPLATES']:
-                batch_tasks = []
-                for p in batch:
-                    if 'processed' not in p:
-                        p['processed']=[]
-                    batch_tasks.append(process(p, template))
+        batch_size = 45
+        for template in settings['TEMPLATES']:
+            batch_tasks = []
+            for p in problems:
+                if 'processed' not in p:
+                    p['processed']=[]
+                if check_processed(p,template):
+                    continue
+                batch_tasks.append(process(p, template))
+                if len(batch_tasks) >= batch_size:
+                    tasks.append(batch_tasks)
+                    batch_tasks = []
+            if len(batch_tasks):
                 tasks.append(batch_tasks)
         print(len(tasks),'batches')
         # wait for all tasks to finish

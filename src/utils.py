@@ -1,6 +1,7 @@
 import json
 import pickle
 import os
+import shutil
 
 def read_problems(filename):
     # read as a json
@@ -23,17 +24,17 @@ def dump_json_safe(obj, filename):
     import tempfile
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         json.dump(obj, f)
-    os.replace(f.name, filename)
+    shutil.move(f.name, filename)
 
 def dump_pickle_safe(obj, filename):
     import tempfile
     with tempfile.NamedTemporaryFile(mode='wb', delete=False) as f:
         pickle.dump(obj, f, protocol=4)
-    os.replace(f.name, filename)
+    shutil.move(f.name, filename)
 
 def dump_numpy_safe(obj, filename):
     import numpy as np
     import tempfile
     with tempfile.NamedTemporaryFile(mode='wb', delete=False) as f:
         np.save(f, obj)
-    os.replace(f.name, filename)
+    shutil.move(f.name, filename)
