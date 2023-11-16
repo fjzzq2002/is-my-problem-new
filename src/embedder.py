@@ -18,6 +18,7 @@ from openai import OpenAI
 import numpy as np
 import pickle
 import cohere
+import os
 
 # it seems most vector database libraries are too heavy for my use case
 
@@ -54,6 +55,7 @@ def get_embeddings(texts, query=False):
     else:
         assert False
 
+
 # quick and dirty vector database implementation
 class VectorDB:
     def __init__(self):
@@ -72,6 +74,8 @@ class VectorDB:
     def save(self, filename=None):
         if filename is None:
             filename = "embs/embs_" + settings["EMBED"].lower()
+            if not os.path.exists("embs"):
+                os.mkdir("embs")
         dump_numpy_safe(self.arr, filename + ".npy")
         dump_json_safe(self.metadata, filename + ".json")
 
