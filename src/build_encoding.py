@@ -10,6 +10,7 @@ print('read',len(emb_keys),'embeddings from db')
 # initialize all encodings if not already done
 for problem_file in problems_filenames():
     problems = read_problems('problems/'+problem_file)
+    print('processing',problem_file)
     todos = []
     for t in problems:
         uid = t['uid']

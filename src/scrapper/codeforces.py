@@ -1,4 +1,4 @@
-from ..utils import read_problems, dump_json_safe
+from ..utils import read_problems, dump_json_safe, get_text
 import json
 import os
 import requests
@@ -25,25 +25,6 @@ list_problems = requests.get(codeforces_endpoint).json()['result']['problems']
 # with open('problems.txt') as f:
 #     list_problems = json.load(f)['result']['problems']
 print('# problems:',len(list_problems))
-
-# https://stackoverflow.com/a/66835172
-def get_text(tag: bs4.Tag) -> str:
-    _inline_elements = {"a","span","em","strong","u","i","font","mark","label",
-    "s","sub","sup","tt","bdo","button","cite","del","b","a","font",}
-
-    def _get_text(tag: bs4.Tag) -> typing.Generator:
-        for child in tag.children:
-            if isinstance(child, bs4.Tag):
-                # if the tag is a block type tag then yield new lines before after
-                is_block_element = child.name not in _inline_elements
-                if is_block_element:
-                    yield "\n"
-                yield from ["\n"] if child.name == "br" else _get_text(child)
-                if is_block_element:
-                    yield "\n"
-            elif isinstance(child, bs4.NavigableString):
-                yield child.string
-    return "".join(_get_text(tag))
 
 # a scrapper for codeforces
 def scrap_problem(contestId, index, rating, tags, uid):

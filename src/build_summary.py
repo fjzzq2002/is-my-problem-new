@@ -52,7 +52,7 @@ async def process(p,template):
             ],
             timeout = 40,
             max_tokens = 1500,
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo", #GPT-3.5-turbo-0613
         )
         assert chat_completion.choices[0].finish_reason == "stop"
         result = chat_completion.choices[0].message.content
@@ -71,9 +71,10 @@ async def process(p,template):
 
 async def process_all_problems():
     for problems_file in problems_filenames():
+        print('Building summary for',problems_file+'...')
         problems = read_problems('problems/'+problems_file)
         tasks = []
-        batch_size = 45
+        batch_size = 25
         for template in settings['TEMPLATES']:
             batch_tasks = []
             for p in problems:
@@ -92,7 +93,14 @@ async def process_all_problems():
         for batch_id, batch_tasks in enumerate(tasks):
             # somehow tqdm wasn't working that well for me
             print('batch',batch_id,'of',len(tasks),f'  elapsed {time.time()-start_time:.2f}s')
+            time_start = time.time()
             await asyncio.gather(*batch_tasks)
+            token_per = 2000
+            token_limit = settings['OPENAI_TPM_LIMIT']
+            expected_time = token_per / (token_limit / 60.) * len(batch_tasks)
+            sleep = max(0,expected_time-(time.time()-time_start))
+            print(f'finished batch, sleeping {sleep:.2f}s')
+            time.sleep(sleep)
             # save the file
             dump_json_safe(problems, 'problems/'+problems_file)
             print('saved!')

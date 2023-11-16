@@ -22,7 +22,7 @@ client = OpenAI(
 )
 
 def querier(statement, template_choice, topk):
-    print(statement, template_choice)
+    # print(statement, template_choice)
     paraphrased = statement
     if 'None' not in template_choice:
         template_id = int(template_choice.split(' ')[1])-1
@@ -45,7 +45,7 @@ def querier(statement, template_choice, topk):
     emb = get_embeddings([paraphrased])[0]
     # query nearest
     nearest = db.query_nearest(emb, k=topk)
-    print(nearest)
+    # print(nearest)
     return paraphrased, {b[1]:a for a,b in nearest}
 
 def show_problem(evt: gr.SelectData):  # SelectData is a subclass of EventData
@@ -78,7 +78,7 @@ with gr.Blocks(title='Is my problem new?', css='.mymarkdown {font-size: 15px !im
                 info="Paste your statement here!",
                 value="Calculate the longest increasing subsequence of the input sequence.",
             )
-            template_type = gr.Radio(["Template "+str(x+1) for x in range(len(settings['TEMPLATES']))]+['None (faster)'], label="Paraphrase with chatgpt?", value="Template 1")
+            template_type = gr.Radio(["Template "+str(x+1) for x in range(len(settings['TEMPLATES']))]+['None (faster)'], label="Paraphrase with chatgpt?", value="Template 2")
             topk_slider = gr.Slider(
                 minimum=1,
                 maximum=100,

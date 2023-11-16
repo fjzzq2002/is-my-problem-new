@@ -1,7 +1,12 @@
+embs*/
+*.bak*
+tmp/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
 
 .DS_Store
 settings.json
