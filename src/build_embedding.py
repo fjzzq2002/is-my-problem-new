@@ -1,4 +1,4 @@
-from .encoder import VectorDB, get_embeddings
+from .embedder import VectorDB, get_embeddings
 from .utils import read_problems, problems_filenames
 from tqdm.auto import tqdm
 
@@ -7,7 +7,7 @@ emb_keys = set([x[0] for x in db.metadata])
 print("read", len(emb_keys), "embeddings from db")
 
 
-# initialize all encodings if not already done
+# initialize all embeddings if not already done
 for problem_file in problems_filenames():
     problems = read_problems("problems/" + problem_file)
     print("processing", problem_file)

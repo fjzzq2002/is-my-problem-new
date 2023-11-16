@@ -1,4 +1,4 @@
-from .encoder import VectorDB, get_embeddings
+from .embedder import VectorDB, get_embeddings
 from .utils import read_problems, problems_filenames
 from tqdm.auto import tqdm
 import gradio as gr
