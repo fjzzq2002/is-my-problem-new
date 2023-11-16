@@ -1,6 +1,8 @@
 # Is my problem new?
 A simple semantic search engine on competitive programming problems.
 
+[Demo server](http://45.63.4.94:1234/) (while supplies last...)
+
 #### Screenshots
 
 ![](screenshots/demo1.png)
