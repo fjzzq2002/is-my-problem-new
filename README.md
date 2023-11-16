@@ -3,6 +3,7 @@ A simple semantic search engine on competitive programming problems.
 
 [Demo server](http://45.63.4.94:1234/) (while supplies last...) <a href="https://www.buymeacoffee.com/fjzzq2002" target="_blank" style="color: brown">[Buy me a boba]</a>
 
+*The included problems of Codeforces & BZOJ are for fair uses only. Their copyrights belong to the original authors and the LICENSE included only apply for the source codes included in this repository.*
 
 #### Screenshots
 
