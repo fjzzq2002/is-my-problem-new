@@ -3,11 +3,8 @@ import json
 import os
 import requests
 import time
-import bs4
-import typing
 from bs4 import BeautifulSoup
 from tqdm.auto import tqdm
-import tempfile
 
 
 scrapped_problems = []

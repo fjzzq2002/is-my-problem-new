@@ -54,7 +54,7 @@ def get_embeddings(texts, query=False):
     else:
         assert False
 
-
+# quick and dirty vector database implementation
 class VectorDB:
     def __init__(self):
         self.arr = np.array([])

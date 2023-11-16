@@ -107,6 +107,7 @@ async def process_all_problems():
             )
             time_start = time.time()
             await asyncio.gather(*batch_tasks)
+            # handle the rate limit
             token_per = 2000
             token_limit = settings["OPENAI_TPM_LIMIT"]
             expected_time = token_per / (token_limit / 60.0) * len(batch_tasks)

@@ -4,7 +4,7 @@ Each file (e.g. `codeforces.json`) contains an array of problems. Each problem h
 
 - `uid`: The unique identifier of the problem. Will be displayed to the users. Make sure it doesn't duplicate across different problem sets.
 - `url`: The url to access the original problem. Will be displayed to the users.
-- `tag`: The tag of the problem. Will be displayed to the users. Might be different across different problem sets.
+- `tag`: The tag of the problem. Might be different across different problem sets.
 - `statement`: The original problem statement scrapped.
   - Use single $ to represent inline math, and double $$ to represent block math.
 - `processed`: Processed problem statements.
