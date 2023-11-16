@@ -1,6 +1,7 @@
 embs*/
 *.bak*
 tmp/
+runit.bat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
