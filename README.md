@@ -31,7 +31,7 @@ You will need API keys from OpenAI (https://platform.openai.com/) and Cohere (ht
 
 1. Copy `settings_sample.json` to `settings.json`. Fill in the API keys.
 
-2. Download embeddings from [here]() or run `python -m src.build_embedding.py` (regenerate embeddings using cohere, costs ~$0.5).
+2. Download embeddings from [here](https://drive.google.com/drive/folders/1QSxokxoh5XTSFKP0xNFDNG7SG9MdvzW6?usp=sharing) and place it in the folder (so that `embs/embs_cohere.npy` exists) or run `python -m src.build_embedding.py` (regenerate embeddings using cohere, costs ~$0.5).
 
 3. Run `python -m src.ui.py` to start your server!
 
