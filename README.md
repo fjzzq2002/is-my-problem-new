@@ -28,6 +28,6 @@ Put problems in `problems/` folder following the given example (`problems/1000.j
 
 For large-scale running decent CPUs are needed as doing vector searching is CPU-dense. You might also want to modify `max_workers` in `src/ui.py`.
 
-Due to copyright concerns we're not providing scrapped vjudge problems and vjudge scrapper. Sorry D: We also did not process the statements in PDF. If you have problems you want to add that are not supported in vjudge feel free to contact me or send PR and I'll see what I can do (would be perfect if you can just send over a zip in this format...).
+Due to copyright concerns we're not providing scrapped vjudge problems and vjudge scrapper. Sorry D: We also did not process the statements in PDF. If you have problems you want to add that are not supported in vjudge feel free to contact me or send PR and I'll see what I can do (would be perfect if you can just send over a zip in the correct format xd).
 
 For reference, adding all ~160k problems from vjudge cost ~$60 and as of writing the deployed site is running on a 8vCPU server.
