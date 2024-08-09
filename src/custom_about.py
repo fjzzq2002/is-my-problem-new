@@ -1,0 +1,5 @@
+gr.Markdown(
+    """<a href="/en">English version</a> | <a href="/zh">中文版本</a>\n\n"""+
+    tr('This project is maintained by <a href="https://github.com/fjzzq2002">@TLE</a>. You can find the open source version <a href="https://github.com/fjzzq2002/is-my-problem-new">here</a>. We would like to thank <a href="https://vjudge.net/">virtual judge</a> for supporting this project!', '本项目由 <a href="https://github.com/fjzzq2002">@TLE</a> 维护。你可以在 <a href="https://github.com/fjzzq2002/is-my-problem-new">这里</a> 找到开源版本。感谢 <a href="https://vjudge.net/">Virtual Judge</a> 对本项目的大力支持！')+'\n\n'+
+    tr('Consider <a href="https://buymeacoffee.com/fjzzq2002">donating</a> if the project is helpful for you! All proceeds will be put into maintenance :)','服务器和运营成本都是 @TLE 自己掏的，所以如果你觉得这个项目对你有用欢迎 <a href="https://buymeacoffee.com/fjzzq2002">捐助</a>！')
+    +'\n\n'+tr('QQ Discussion Group (for Chinese users): ','QQ群：')+'829942060'+tr('','，欢迎前来吹水对线！'))

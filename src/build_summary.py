@@ -2,10 +2,13 @@
 # use the chatgpt api
 import requests
 import json
-from .utils import read_problems, problems_filenames, dump_json_safe
+from .utils import read_problem, problem_filenames, dump_json_safe, dump_json_safe_utf8
 from openai import AsyncOpenAI
+from together import AsyncTogether
+import anthropic
 import hashlib
 import asyncio
+from tqdm.auto import tqdm
 
 # from tqdm import tqdm
 import time
@@ -16,29 +19,31 @@ start_time = time.time()
 with open("settings.json") as f:
     settings = json.load(f)
 
-client = AsyncOpenAI(
-    api_key=settings["OPENAI_API_KEY"],
+client = AsyncTogether(
+    api_key=settings['TOGETHER_API_KEY'],
 )
 
 
 def check_processed(p, template):
-    ORIGINAL = "\n" + p["statement"] + "\n"
+    ORIGINAL = p["statement"]
     prompt = template.replace("[[ORIGINAL]]", ORIGINAL).strip()
-    prompt_md5 = hashlib.md5(prompt.encode("utf-8")).hexdigest()
+    prompt_md5 = hashlib.md5(prompt.encode("utf-8")).hexdigest()[:8]
     for f in p["processed"]:
-        if f["prompt_md5"] == prompt_md5:
+        if f["prompt_md5"][:8] == prompt_md5:
             return True
     return False
 
 
-async def process(p, template):
-    ORIGINAL = "\n" + p["statement"] + "\n"
+async def process(p, template, delay = 0):
+    # sleep for delay first
+    await asyncio.sleep(delay)
+    ORIGINAL = p["statement"]
     prompt = template.replace("[[ORIGINAL]]", ORIGINAL).strip()
-    template_md5 = hashlib.md5(template.encode("utf-8")).hexdigest()
-    prompt_md5 = hashlib.md5(prompt.encode("utf-8")).hexdigest()
+    template_md5 = hashlib.md5(template.encode("utf-8")).hexdigest()[:8]
+    prompt_md5 = hashlib.md5(prompt.encode("utf-8")).hexdigest()[:8]
     already_processed = False
     for f in p["processed"]:
-        if f["prompt_md5"] == prompt_md5:
+        if f["prompt_md5"][:8] == prompt_md5:
             already_processed = True
     if already_processed:
         return
@@ -46,77 +51,86 @@ async def process(p, template):
     # print(num_tokens_from_string(prompt))
     result = None
     try:
-        chat_completion = await client.chat.completions.create(
+        response = await client.chat.completions.create(
             messages=[
                 {
                     "role": "user",
                     "content": prompt,
-                }
+                },
+                { "role": "assistant", "content": "Simplified statement:" }
             ],
-            timeout=40,
-            max_tokens=1500,
-            model="gpt-3.5-turbo",  # GPT-3.5-turbo-0613
+            model="google/gemma-2-9b-it",
         )
-        assert chat_completion.choices[0].finish_reason == "stop"
-        result = chat_completion.choices[0].message.content
-        num_tokens_spent = chat_completion.usage.total_tokens
-        print(f"Number of tokens spent: {num_tokens_spent}")
+#        assert chat_completion.stop_reason=='end_turn'
+        result = response.choices[0].message.content.strip()
+        print(f"Number of tokens spent: {response.usage.total_tokens}")
     except Exception as e:
         print("Error while prompting:", e)
     if result is None:
-        return
-    # print(result)
-    p["processed"].append(
+        return []
+    return [
         {
             "prompt_md5": prompt_md5,
             "template_md5": template_md5,
             "result": result,
         }
-    )
+    ]
 
 
 async def process_all_problems():
-    for problems_file in problems_filenames():
-        print("Building summary for", problems_file + "...")
-        problems = read_problems("problems/" + problems_file)
-        tasks = []
-        batch_size = 25
+    # apparently some mysterious OJs are spending my money ;_;
+    goodojs = ['UOJ', 'Codeforces', '洛谷', 'DMOJ', 'HDU', 'CodeChef', 'AtCoder', 'LibreOJ', 'TopCoder', 'SPOJ', '51Nod', '黑暗爆炸', 'UVA'] #, 'USACO'
+    badojs = ['HYSBZ', 'BZOJ']
+    fns = sorted(list(problem_filenames()),key=lambda x:int(not any(goodoj.lower() in x.lower() for goodoj in goodojs))+int(any(badoj.lower() in x.lower() for badoj in badojs)))
+    chunk_size = 50
+    gap_every = 1/8.5
+    problem_files = []
+    for problem_file_cur in tqdm(fns):#tqdm(range(0,len(fns),chunk_size)):
+        try:
+            p = read_problem(problem_file_cur)
+        except Exception as e:
+            print('error',problem_file_cur,e)
+            continue
+        need_work = False
         for template in settings["TEMPLATES"]:
-            batch_tasks = []
-            for p in problems:
-                if "processed" not in p:
-                    p["processed"] = []
-                if check_processed(p, template):
+            if 'processed' in p and check_processed(p, template):
+                continue
+            need_work = True
+        if need_work:
+            problem_files.append(problem_file_cur)
+        if len(problem_files) >= chunk_size or problem_file_cur == fns[-1]:
+            for template in settings["TEMPLATES"]:
+                t0 = time.time()
+                tasks = []
+                notprocessed = []
+                for idx, problem_file in enumerate(problem_files):
+                    p = read_problem(problem_file)
+                    if "processed" not in p:
+                        p["processed"] = []
+                    if check_processed(p, template):
+                        continue
+                    notprocessed.append(problem_file)
+                    tasks.append(process(p, template, idx * gap_every))
+                if not len(tasks):
                     continue
-                batch_tasks.append(process(p, template))
-                if len(batch_tasks) >= batch_size:
-                    tasks.append(batch_tasks)
-                    batch_tasks = []
-            if len(batch_tasks):
-                tasks.append(batch_tasks)
-        print(len(tasks), "batches")
-        # wait for all tasks to finish
-        for batch_id, batch_tasks in enumerate(tasks):
-            # somehow tqdm wasn't working that well for me
-            print(
-                "batch",
-                batch_id,
-                "of",
-                len(tasks),
-                f"  elapsed {time.time()-start_time:.2f}s",
-            )
-            time_start = time.time()
-            await asyncio.gather(*batch_tasks)
-            # handle the rate limit
-            token_per = 2000
-            token_limit = settings["OPENAI_TPM_LIMIT"]
-            expected_time = token_per / (token_limit / 60.0) * len(batch_tasks)
-            sleep = max(0, expected_time - (time.time() - time_start))
-            print(f"finished batch, sleeping {sleep:.2f}s")
-            time.sleep(sleep)
-            # save the file
-            dump_json_safe(problems, "problems/" + problems_file)
-            print("saved!")
+                WAIT = chunk_size * gap_every + .5
+                results = await asyncio.gather(*tasks)
+                for problem_file, result in zip(notprocessed, results):
+                    if not len(result):
+                        WAIT = 6
+                        continue
+                    p = read_problem(problem_file)
+                    if "processed" not in p:
+                        p["processed"] = []
+                    p["processed"].extend(result)
+                    print(problem_file)
+                    dump_json_safe_utf8(p, problem_file)
+                t1 = time.time()
+                print('time elapsed',t1-t0)
+                # wait till WAIT
+                if t1-t0 < WAIT:
+                    await asyncio.sleep(WAIT-(t1-t0))
+            problem_files = []
 
-
-asyncio.run(process_all_problems())
+if __name__ == "__main__":
+    asyncio.run(process_all_problems())

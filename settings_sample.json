@@ -1,10 +1,11 @@
 {
-    "OPENAI_API_KEY": "[FILL YOUR OPENAI API KEY]",
-    "COHERE_API_KEY": "[FILL YOUR COHERE API KEY]",
-    "EMBED": "COHERE",
-    "OPENAI_TPM_LIMIT": 90000,
+    "OPENAI_API_KEY": "[TODO]",
+    "TOGETHER_API_KEY": "[TODO]",
+    "VOYAGE_API_KEY": "[TODO]",
     "TEMPLATES": [
-        "I have the following competitive programming problem that I want to show someone else:\n[[ORIGINAL]]\nCan you strip off all the stories, legends, characters, backgrounds etc. from the statement while still enabling everyone to understand the problem. This is to say, do not remove anything necessary to understand the full problem and one should feel safe to replace the original statement with your version of the statement. If it is not in English make it English. Provide the simplified statement directly without jargon. Use mathjax ($...$) for math.",
-        "I have the following competitive programming problem that I want to show someone else:\n[[ORIGINAL]]\nCan you strip off all the stories, legends, characters, backgrounds, examples etc. from the statement while still enabling everyone to understand the problem. If it is not in English make it English. Make it as short as possible while still being understandable. Try to avoid formulas and symbols. If necessary, mathjax ($...$) for math. Provide the short simplified statement directly without jargon."
-    ]
+        "I have the following competitive programming problem that I want to show someone else:\n\n=======\n[[ORIGINAL]]\n=======\n\nStrip off all the stories, legends, characters, backgrounds etc. from the statement while still enabling everyone to understand the problem. Also remove the name of the character if possible. This is to say, do not remove anything necessary to understand the full problem and one should feel safe to replace the original statement with your version of the statement. If it is not in English make it English. Provide the simplified statement directly without jargon. Use mathjax ($...$) for math. Start your response with \"Simplified statement:\".",
+        "I have the following competitive programming problem that I want to show someone else:\n\n=======\n[[ORIGINAL]]\n=======\n\nStrip off all the stories, legends, characters, backgrounds, examples, well-known definitions etc. from the statement while still enabling everyone to understand the problem. Also remove the name of the character if applicable. If it is not in English translate it. Make it as succinct as possible while still being understandable. Try to avoid formulas and symbols. Abstract freely - for example, if the problem is about buying sushi, you can just phrase it as a knapsack problem. If necessary, mathjax ($...$) for math. Provide the *succinct* simplified statement directly without jargon. Start your response with \"Simplified statement:\"."
+    ],
+    "CUSTOM_HEADER": "",
+    "CUSTOM_ABOUT_PY": "src/custom_about.py"
 }

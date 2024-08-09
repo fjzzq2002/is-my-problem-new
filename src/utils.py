@@ -4,6 +4,8 @@ import os
 import shutil
 import typing
 import bs4
+import numpy as np
+import tempfile
 
 
 # https://stackoverflow.com/a/66835172
@@ -46,48 +48,61 @@ def get_text(tag: bs4.Tag) -> str:
 
     return "".join(_get_text(tag))
 
+def cleanup_str(s: str, allow_double_breaks = False) -> str:
+    s = '\n'.join( line.strip() for line in s.splitlines() ).strip()
+    # remove redundant linebreaks
+    while True:
+        if allow_double_breaks:
+            ss = s.replace('\n\n\n','\n\n')
+        else:
+            ss = s.replace('\n\n','\n')
+        if ss == s: break
+        s = ss
+    return s
 
-def read_problems(filename):
+def read_problem(filename):
     # read as a json
-    with open(filename) as f:
-        problems = json.load(f)
-        return [x for x in problems if len(x["statement"].strip()) >= 5]
+    with open(filename, encoding='utf-8') as f:
+        return json.load(f)
+
+def problem_filenames(path='problems/'):
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if not filename.endswith(".json"):
+                continue
+            yield os.path.join(root, filename)
 
 
-def problems_filenames():
-    for filename in os.listdir("problems"):
-        if filename.endswith(".json"):
-            yield filename
-
-
-def read_all_problems():
+def list_problems(embed = False):
     # list all problems under problems/
-    problems = []
-    for filename in problems_filenames():
-        problems += read_problems("problems/" + filename)
-    return problems
+    for problem_filename in problem_filenames():
+        assert problem_filename.endswith(".json")
+        if not embed:
+            yield problem_filenames
+            continue
+        npy_filename = problem_filename[:-5] + ".npy"
+        if os.path.exists(npy_filename):
+            yield read_problem(problem_filename), np.load(npy_filename)
 
 
 def dump_json_safe(obj, filename):
-    import tempfile
-
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
         json.dump(obj, f)
     shutil.move(f.name, filename)
 
 
-def dump_pickle_safe(obj, filename):
-    import tempfile
+def dump_json_safe_utf8(obj, filename):
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding='utf-8') as f:
+        json.dump(obj, f, ensure_ascii=False)
+    shutil.move(f.name, filename)
 
+def dump_pickle_safe(obj, filename):
     with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
         pickle.dump(obj, f, protocol=4)
     shutil.move(f.name, filename)
 
 
 def dump_numpy_safe(obj, filename):
-    import numpy as np
-    import tempfile
-
     with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
         np.save(f, obj)
     shutil.move(f.name, filename)
