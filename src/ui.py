@@ -378,7 +378,3 @@ app = gr.mount_gradio_app(app, get_block('en'), path="/en")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=80)
-
-# python -m venv myenv
-# source myenv/bin/activate
-# pip install numpy gradio openai together fastapi anthropic tqdm bs4 voyageai uvicorn --upgrade
