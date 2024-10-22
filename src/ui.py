@@ -319,7 +319,7 @@ def get_block(locale):
                                     )
             if 'CUSTOM_ABOUT_PY' in settings and settings['CUSTOM_ABOUT_PY'].endswith('.py'):
                 with gr.TabItem(tr("About",'关于'),id=2):
-                    eval(open(settings['CUSTOM_ABOUT_PY'], 'r', encoding='utf-8').read())
+                    with open(settings['CUSTOM_ABOUT_PY'], 'r', encoding='utf-8') as f: eval(f.read())
 
         # add a footer
         gr.HTML(
