@@ -4,7 +4,7 @@ A simple semantic search engine on competitive programming problems.
 
 <img src="logo.gif" style="zoom:50%;" />
 
-**Update (2026/6/14):** Shipped a ground-up v2 (now live at the link above) — a new corpus/index pipeline, LLM statement rewriting, a [gemini-embedding-001](https://ai.google.dev/gemini-api/docs/embeddings) centroid index, and a single-file server + frontend (dark mode, serve-time dedup, offline mode, ~255k problems). The writeup and serving/index code are in the [`v2`](https://github.com/fjzzq2002/is-my-problem-new/tree/v2) branch.
+**Update (2026/6/14):** Updated again! The problem set is now synced with the latest vjudge with ~255k problems. The pipeline also now allows for offline deployment on a MacBook (though we're not providing the set of problems publicly). We also redesigned a fancier-looking UI. The writeup and serving/index code are in the [`v2`](https://github.com/fjzzq2002/is-my-problem-new/tree/v2) branch.
 
 **Update (2025/10/31):** Incorporated QOJ OCR data from [@cjwen6](https://github.com/cjwen6). Thanks a lot for the contribution! Also added HTTPS.
 
