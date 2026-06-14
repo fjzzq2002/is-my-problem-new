@@ -4,6 +4,8 @@ A simple semantic search engine on competitive programming problems.
 
 <img src="logo.gif" style="zoom:50%;" />
 
+**Update (2026/6/14):** Shipped a ground-up v2 (now live at the link above) — a new corpus/index pipeline, LLM statement rewriting, a [gemini-embedding-001](https://ai.google.dev/gemini-api/docs/embeddings) centroid index, and a single-file server + frontend (dark mode, serve-time dedup, offline mode, ~255k problems). The writeup and serving/index code are in the [`v2`](https://github.com/fjzzq2002/is-my-problem-new/tree/v2) branch.
+
 **Update (2025/10/31):** Incorporated QOJ OCR data from [@cjwen6](https://github.com/cjwen6). Thanks a lot for the contribution! Also added HTTPS.
 
 **Update (2024/7/16):** It has been a long time :) Reorganized problems path. Switched LLM / embedder to [Gemma 2 9B](https://huggingface.co/google/gemma-2-9b-it) hosted by [together.ai](https://docs.together.ai) and [voyage-large-2-instruct](https://docs.voyageai.com/docs/pricing). Tweaked the prompt a little bit. Bought a new domain (see the link above) and switched to [vjudge](https://vjudge.net) as data source. See branch `old_ver` or history commits for the previous version.
