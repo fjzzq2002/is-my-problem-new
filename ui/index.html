@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Is my problem new?</title>
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap" rel="stylesheet"
+      onerror="this.remove();document.head.insertAdjacentHTML('beforeend','<link rel=stylesheet href=/fonts/plex.css>')" />
+<script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+<style>
+:root{
+  --bg:#ffffff; --panel:#ffffff; --surface:#f8f8f8;
+  --ink:#09090b; --muted:#707076; --faint:#9a9aa2; --ghost:#c9c9cf;
+  --line:rgba(18,18,28,.08); --line-2:rgba(18,18,28,.16);
+  --accent:#ff4d14; --accent-2:#ff9500; --accent-ink:#ff4d14; --accent-weak:rgba(255,77,20,.10);
+  --good:#ff4d14; --good-weak:rgba(255,77,20,.12);
+  --down:#9a9aa2; --down-weak:rgba(20,20,28,.045);
+  --r:8px; --r-sm:7px;
+  --shadow:0 1px 2px rgba(20,20,30,.06);
+  --shadow-lg:0 12px 28px rgba(20,20,30,.08), 0 2px 8px rgba(20,20,30,.04);
+  --sans:'IBM Plex Sans',-apple-system,system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{font-family:var(--sans); background:var(--bg); color:var(--ink);
+  font-size:16px; line-height:1.5; letter-spacing:0; min-height:100vh}
+body::before{content:""; position:fixed; inset:0; z-index:0; pointer-events:none; background:none}
+body::after{content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.015;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.app{position:relative; z-index:1}
+
+/* top bar */
+.topbar{position:sticky; top:0; z-index:20; backdrop-filter:saturate(1.4) blur(8px);
+  background:rgba(251,251,250,.78); border-bottom:1px solid var(--line)}
+.topbar .inner{max-width:840px; margin:0 auto; padding:0 24px; height:54px;
+  display:flex; align-items:center; justify-content:space-between}
+.brand{display:flex; align-items:center; gap:10px; user-select:none}
+.brand .mark{width:15px; height:15px; border-radius:4px; background:var(--ink); position:relative;
+  box-shadow:inset 0 0 0 2.5px var(--bg), 0 0 0 1px var(--ink)}
+.brand .mark::after{content:""; position:absolute; inset:4.5px; background:var(--accent); border-radius:1px}
+.brand .name{font-weight:600; letter-spacing:0; font-size:14.5px}
+.brand .zh{font-size:12px; color:var(--faint); letter-spacing:0; padding-left:9px; border-left:1px solid var(--line-2)}
+.seg{position:relative; display:flex; padding:4px; background:var(--panel);
+  border:1px solid rgba(18,18,28,.18); border-radius:9px; gap:2px}
+.seg button{position:relative; z-index:2; appearance:none; border:0; background:transparent;
+  font-family:var(--sans); font-size:15px; font-weight:500; color:#5f5f65;
+  min-width:74px; height:42px; padding:0 12px; border-radius:8px; cursor:pointer; letter-spacing:0; transition:color .18s}
+.seg button.on{color:var(--accent-ink); font-weight:600}
+.seg .pill{position:absolute; z-index:1; top:4px; bottom:4px; border-radius:8px; background:var(--panel);
+  border:1.5px solid var(--accent); box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);
+  transition:left .18s cubic-bezier(.4,.1,.2,1), width .18s cubic-bezier(.4,.1,.2,1)}
+
+/* main */
+.wrap{max-width:1000px; margin:0 auto; padding:clamp(28px,2.44vw,34px) clamp(16px,1.83vw,27px) clamp(56px,4.27vw,59px);
+  transition:max-width 1s cubic-bezier(.16,1,.3,1)}
+html.wide .wrap,html.wide footer{max-width:100%}
+.titlerow{display:flex; align-items:flex-start; justify-content:space-between; gap:16px 24px; flex-wrap:wrap; margin-bottom:22px}
+.pagetitle{font-size:clamp(31px,2.2vw,32px); font-weight:700; letter-spacing:0; line-height:1.12; margin-bottom:clamp(10px,0.76vw,11px)}
+.subtitle{margin-top:10px; font-size:15.5px; color:#6e6e73; max-width:64ch; line-height:1.45; letter-spacing:0}
+
+.querybox{border-radius:var(--r); box-shadow:0 1px 2px rgba(20,20,30,.05)}
+.querybox.has-rewrites{border:1.5px solid rgba(255,106,20,.30); background:var(--panel); overflow:hidden}
+.querybox.has-rewrites:focus-within{box-shadow:0 1px 2px rgba(20,20,30,.05)}
+.querybox.has-rewrites .search{border:0; border-radius:0; box-shadow:none}
+.search{position:relative; background:var(--panel); border:1.5px solid rgba(255,106,20,.30); border-radius:var(--r);
+  min-height:176px; box-shadow:0 1px 2px rgba(20,20,30,.05); transition:border-color .15s, box-shadow .15s; overflow:hidden}
+.search:focus-within{border-color:#ff7a2f; box-shadow:0 0 0 3px rgba(255,77,20,.08), 0 1px 2px rgba(20,20,30,.05)}
+.querybox.has-rewrites .search:focus-within{box-shadow:inset 0 0 0 2px #ff7a2f; border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
+.search textarea{display:block; width:100%; border:0; outline:0; resize:none; font-family:var(--sans);
+  font-size:clamp(17px,1.28vw,18px); line-height:1.55; color:var(--ink); padding:clamp(22px,1.89vw,27px) clamp(18px,1.71vw,24px) 16px; background:transparent;
+  letter-spacing:0; min-height:96px; caret-color:rgba(255,77,20,.82); caret-shape:block}
+.search textarea::placeholder{color:var(--ghost)}
+.search .bar{display:flex; align-items:flex-end; justify-content:space-between; padding:17px clamp(18px,1.31vw,19px) clamp(18px,1.31vw,19px) clamp(18px,1.71vw,24px); gap:clamp(14px,1.04vw,15px)}
+.opts{display:flex; align-items:center; gap:27px; flex-wrap:wrap}
+.chip{display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none; font-size:12px;
+  color:var(--ink); padding:0; border:0; background:transparent; transition:color .16s;
+  font-family:var(--sans); font-size:16px; font-weight:500; letter-spacing:0}
+.chip:hover{color:var(--ink)}
+.chip .dot{width:24px; height:24px; border-radius:7px; border:1.5px solid var(--ghost); display:grid;
+  place-items:center; transition:.16s; flex:none; margin-left:4px}
+.chip .dot svg{width:15px; height:15px; opacity:0; transform:scale(.6); transition:.16s}
+.chip.on{color:var(--ink)}
+.chip.on .dot{background:linear-gradient(135deg,var(--accent-2),var(--accent)); border-color:var(--accent)}
+.chip.on .dot svg{opacity:1; transform:scale(1)}
+.go{display:inline-flex; align-items:center; gap:8px; appearance:none; border:0; cursor:pointer;
+  background:linear-gradient(120deg,var(--accent-2),#ff3f27); color:#fff; font-family:var(--sans); font-weight:700; font-size:clamp(17px,1.28vw,18px);
+  min-height:50px; padding:0 clamp(16px,1.19vw,17px); border-radius:9px; letter-spacing:0; transition:.15s; box-shadow:0 6px 14px rgba(255,77,20,.18)}
+.search:focus-within .go{filter:brightness(1.05); box-shadow:0 6px 18px rgba(255,77,20,.32)}
+.go:hover{filter:brightness(1.04)} .go:active{transform:translateY(1px); box-shadow:0 2px 7px rgba(255,77,20,.18)}
+.go svg{width:19px; height:19px; flex:none}
+.go kbd{font-family:var(--mono); font-size:11px; font-weight:600; background:rgba(255,255,255,.18); padding:4px 6px; border-radius:7px; line-height:1}
+
+/* query rewrite panel */
+.rewrites{margin-top:0; border:0; border-radius:0; background:#fff8f4;
+  box-shadow:none; overflow:hidden}
+.rewrites summary{display:none}
+.rewrites .body{padding:clamp(20px,1.43vw,21px) clamp(18px,1.71vw,24px) clamp(22px,1.59vw,23px); border-top:1.5px solid rgba(255,106,20,.30)}
+.rw{padding:0 0 clamp(14px,1.04vw,15px); border-bottom:2px solid #f0e0d4} .rw + .rw{padding-top:clamp(14px,1.04vw,15px)}.rw:last-child{padding-bottom:0; border-bottom:0}
+.rw .tag{display:none}
+.rw p{font-size:clamp(15.5px,1.16vw,16px); color:var(--ink); line-height:1.5; letter-spacing:0}
+
+/* results toolbar */
+.toolbar{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  padding:clamp(30px,2.13vw,31px) 2px clamp(22px,1.74vw,25px)}
+.meta{display:flex; align-items:center; gap:clamp(12px,1.04vw,15px); flex-wrap:wrap; font-family:var(--sans); font-size:14px;
+  color:#6c6c72; letter-spacing:0}
+.meta .n{color:#6c6c72; font-weight:500}.meta .n b{color:var(--accent-ink); font-size:20px; font-weight:700; margin-right:10px}
+.meta b{color:var(--ink); font-weight:700}
+.meta .sep{width:1px; height:18px; background:var(--line-2)}
+.rep{display:flex; align-items:center; gap:2px}
+.rep .lbl{color:#6c6c72; margin-right:11px; letter-spacing:0; text-transform:none; font-size:14px; font-family:var(--sans)}
+.rep button{appearance:none; border:1px solid rgba(18,18,28,.14); background:var(--panel); color:#48484e;
+  font-family:var(--sans); font-size:14px; font-weight:500; min-height:40px; padding:0 clamp(13px,1.04vw,15px); border-radius:9px; cursor:pointer; transition:.15s}
+.rep button:hover{color:var(--ink); background:rgba(18,18,28,.04)}
+.rep button.on{color:var(--accent-ink); background:var(--panel); border-color:rgba(255,77,20,.38)}
+
+/* rerank opt-in */
+.rerankbar{margin:4px 0 8px}
+.rrbtn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+  border:1px dashed var(--line-2); background:var(--panel); border-radius:var(--r); padding:11px 14px;
+  cursor:pointer; font-family:var(--mono); font-size:12px; color:var(--muted); transition:.16s; letter-spacing:0}
+.rrbtn:hover{border-color:var(--accent); color:var(--accent-ink); background:var(--accent-weak)}
+.rrbtn .ic{font-size:13px; line-height:1}
+.rrbtn .hint{color:var(--faint)} .rrbtn:hover .hint{color:var(--accent-ink)}
+.rrbtn.busy{cursor:default; border-style:solid; color:var(--accent-ink)}
+.rrbtn.busy:hover{background:var(--panel)}
+.rrstatus{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:11.5px; color:var(--good); padding:4px 2px}
+.rrstatus .revert{color:var(--faint); cursor:pointer; text-decoration:underline; text-underline-offset:2px}
+.rrstatus .revert:hover{color:var(--ink)}
+.spin{width:18px; height:18px; border:2px solid rgba(20,20,28,.18); border-top-color:var(--accent);
+  border-radius:50%; animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* results */
+.results{list-style:none; display:flex; flex-direction:column; position:relative; z-index:0}
+.row{position:relative; border-radius:var(--r); background:transparent; animation:rise .42s cubic-bezier(.2,.7,.2,1) both}
+.row::before{content:""; position:absolute; inset:0 clamp(-28px,-3vw,-12px) 0 0; z-index:-1; pointer-events:none; opacity:0;
+  background:linear-gradient(90deg,rgba(255,77,20,.50),rgba(255,77,20,0)) top left/100% 1.5px no-repeat,
+             linear-gradient(90deg,rgba(255,77,20,.50),rgba(255,77,20,0)) bottom left/100% 1.5px no-repeat;
+  transform:scaleX(0); transform-origin:left; transition:transform .4s cubic-bezier(.2,.7,.2,1), opacity .1s}
+.row::after{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent);
+  z-index:-1; pointer-events:none; transform:scaleX(0); transform-origin:left; visibility:hidden;
+  transition:transform .3s cubic-bezier(.2,.7,.2,1), visibility 0s .3s}
+.row:hover::before,.row.open::before{opacity:1; transform:scaleX(1)}
+.row:hover::after,.row.open::after{visibility:visible; transform:scaleX(1);
+  transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.row:hover .rank,.row.open .rank{background:linear-gradient(135deg,var(--accent-2),#ff3f27); color:#fff;
+  transform:translateX(3px)}
+.row:hover .rowhead,.row.open .rowhead{transform:translateX(15px)}
+.row .score{transition:transform .3s cubic-bezier(.2,.7,.2,1); margin-left:5px}
+.row:hover .score,.row.open .score{transform:translateX(-4px)}
+.row + .row{margin-top:clamp(8px,0.76vw,11px)}
+@keyframes rise{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
+.rowhead{display:flex; gap:clamp(14px,1.43vw,21px); padding:clamp(26px,1.98vw,29px) 8px clamp(26px,1.89vw,27px) 8px; cursor:pointer; align-items:flex-start;
+  transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.rank{flex:none; width:40px; height:40px; display:grid; place-items:center; border-radius:7px;
+  background:var(--accent-weak); color:var(--accent-ink); font-family:var(--mono); font-size:17px; font-weight:600;
+  font-variant-numeric:tabular-nums; letter-spacing:0;
+  transition:background .18s, color .18s, transform .38s cubic-bezier(.16,1,.3,1)}
+.main{flex:1; min-width:0}
+.title{font-size:19px; font-weight:700; letter-spacing:0; color:var(--ink); text-decoration:none; line-height:1.2}
+.title:hover{color:var(--accent-ink); text-decoration:underline; text-underline-offset:2px}
+.sub{display:flex; align-items:center; flex-wrap:wrap; gap:clamp(8px,0.61vw,9px); margin-top:12px; font-family:var(--mono); font-size:13px; color:var(--faint); letter-spacing:0}
+.src{color:var(--muted)} .uid{color:var(--accent-ink)}
+.also{display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-top:10px;
+  font-family:var(--mono); font-size:12px; color:var(--faint); letter-spacing:0}
+.also a{color:var(--accent-ink); text-decoration:none}
+.also a:hover{text-decoration:underline; text-underline-offset:2px}
+.also .d{color:var(--ghost)} .also .more{color:var(--ghost)}
+.snip{margin-top:clamp(12px,0.92vw,13px); color:#29292d; font-size:clamp(15px,0.88vw,17px); line-height:1.65; letter-spacing:0;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.row.open .snip{display:block; overflow:visible; -webkit-line-clamp:unset; white-space:pre-wrap}
+.ojlink{display:none; margin-top:14px; width:fit-content; font-family:var(--mono);
+  font-size:13px; color:var(--accent-ink); text-decoration:none}
+.ojlink:hover{text-decoration:underline; text-underline-offset:3px}
+.row.open .ojlink{display:inline-block}
+.data{flex:none; width:clamp(140px,11.16vw,162px); display:flex; flex-direction:column; align-items:flex-end; gap:clamp(8px,0.67vw,10px); padding-top:8px}
+.score{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:21px; font-weight:700; color:var(--accent-ink); letter-spacing:0; line-height:1}
+.score .lbl{font-size:12px; color:#818187; font-weight:500; letter-spacing:0; margin-right:10px; text-transform:uppercase}
+.bartrack{width:clamp(130px,10.8vw,156px); height:clamp(10px,0.76vw,11px); overflow:hidden; background:repeating-linear-gradient(90deg, rgba(255,106,20,.15) 0 10px, transparent 10px 15px)}
+.barfill{height:100%; width:0; transition:width .5s cubic-bezier(.2,.7,.2,1);
+  background:repeating-linear-gradient(90deg, var(--accent) 0 10px, transparent 10px 15px)}
+.xtra{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px; color:#6f6f76}
+.move{display:inline-flex; align-items:center; gap:6px; padding:5px clamp(9px,0.67vw,10px); border-radius:9px; border:1px solid var(--line-2); font-variant-numeric:tabular-nums; font-size:13px}
+.move.up{color:var(--accent-ink); border-color:rgba(255,106,20,.35); background:var(--accent-weak)}
+.move.dn{color:var(--muted); background:var(--panel)}
+.move.eq{color:var(--faint); background:var(--panel)}
+.rr{font-family:var(--mono); font-size:13px; color:var(--muted)} .rr b{color:var(--accent-ink); font-weight:700}
+
+.expert-only{display:none} body.expert .expert-only{display:flex}
+body.expert .snip{-webkit-line-clamp:3}
+body.expert .row.open .snip{-webkit-line-clamp:unset}
+
+/* pager */
+.pager{display:flex; align-items:center; justify-content:center; gap:clamp(14px,1.1vw,16px); padding:24px 0 4px;
+  font-family:var(--mono); font-size:13px}
+.pg{appearance:none; border:1px solid var(--line-2); background:var(--panel); border-radius:9px; padding:7px 12px;
+  cursor:pointer; font-family:var(--sans); font-size:14px; color:var(--ink); transition:.15s}
+.pg:hover:not(:disabled){border-color:var(--accent); color:var(--accent-ink)}
+.pg:disabled{opacity:.35; cursor:default}
+.pgnum{color:var(--faint); font-variant-numeric:tabular-nums; letter-spacing:0}
+
+.empty{padding:34px 4px; text-align:left; color:var(--faint); font-size:17px; line-height:1.45}
+.empty .mono{font-family:var(--mono); font-size:13px; color:var(--ghost); margin-top:10px; letter-spacing:0}
+@keyframes blink{50%{opacity:0}}
+.skel{display:flex; align-items:flex-start; gap:clamp(14px,1.43vw,21px); padding:clamp(20px,1.43vw,21px) 0}
+.skel:first-child{margin-top:clamp(28px,2.01vw,29px)}
+.skel .b{background:linear-gradient(90deg,rgba(18,18,28,.05),rgba(18,18,28,.09),rgba(18,18,28,.05));
+  background-size:200% 100%; border-radius:5px; animation:sh 1.2s infinite}
+.skel-rank{width:40px; height:40px; border-radius:9px; flex:none}
+.skel-main{flex:1; min-width:0}
+.skel-title{width:48%; height:24px}
+.skel-sub{width:30%; height:18px; margin-top:15px}
+.skel-score{width:clamp(110px,8.05vw,116px); height:22px; margin-top:7px; flex:none}
+@keyframes sh{to{background-position:-200% 0}}
+
+footer{max-width:1000px; margin:0 auto; padding:22px clamp(16px,1.83vw,27px) 40px; transition:max-width 1s cubic-bezier(.16,1,.3,1); font-family:var(--mono); font-size:13px;
+  color:var(--muted); display:flex; align-items:center; flex-wrap:wrap; gap:clamp(8px,0.61vw,9px) 14px; letter-spacing:0}
+footer .sep{width:1px;height:14px;background:var(--line-2)}
+.aboutlink{appearance:none; border:0; background:transparent; cursor:pointer; padding:0;
+  font-family:var(--mono); font-size:inherit; color:inherit; letter-spacing:0; transition:color .15s}
+.aboutlink:hover{color:var(--ink)}
+.modal{position:fixed; inset:0; z-index:50; display:grid; place-items:center; padding:24px;
+  background:rgba(20,20,28,.34); backdrop-filter:blur(3px); animation:fade .18s ease}
+.modal[hidden]{display:none}
+@keyframes fade{from{opacity:0}}
+.modal-card{position:relative; max-width:620px; width:100%; background:var(--panel); border:1px solid var(--line-2);
+  border-radius:10px; box-shadow:var(--shadow-lg); padding:34px 36px 30px; animation:pop .2s cubic-bezier(.2,.7,.2,1)}
+@keyframes pop{from{opacity:0; transform:translateY(8px) scale(.99)}}
+.modal-x{position:absolute; top:14px; right:18px; appearance:none; border:0; background:transparent; font-size:26px;
+  line-height:1; color:var(--faint); cursor:pointer; transition:color .15s}
+.modal-x:hover{color:var(--ink)}
+.modal-body{font-size:15px; line-height:1.62; color:var(--muted)}
+.modal-body h3{font-size:19px; font-weight:600; letter-spacing:0; color:var(--ink); margin-bottom:6px}
+.modal-body p{margin-top:11px}
+.modal-body a{color:var(--accent-ink); text-decoration:none}
+.modal-body a:hover{text-decoration:underline; text-underline-offset:2px}
+.modal-body .qq{font-family:var(--mono); font-size:16px; color:var(--faint); margin-top:18px}
+
+/* expert controls */
+.ctrls{align-items:center; gap:18px; flex-wrap:wrap}  /* display comes from .expert-only show rule */
+.tbtn{display:inline-flex; align-items:center; gap:12px; font-family:var(--sans); font-size:14px; font-weight:600;
+  color:var(--muted); min-height:40px; padding:0 clamp(12px,0.92vw,13px); border:1px solid var(--line-2); background:var(--panel);
+  border-radius:9px; cursor:pointer; transition:.15s; letter-spacing:0; line-height:1.1}
+.tbtn:hover{border-color:var(--accent); color:var(--accent-ink)}
+.tbtn.on{color:var(--accent-ink); background:var(--accent-weak); border-color:rgba(255,106,20,.32)}
+.tbtn.busy{color:var(--accent-ink); cursor:default; border-color:rgba(255,106,20,.32)}
+.tbtn .ic{font-size:14px; line-height:1}
+.ctrls .rep{padding-left:18px; margin-left:0; border-left:1px solid var(--line-2); gap:10px}
+.barhint{font-family:var(--mono); font-size:11px; color:var(--ghost); letter-spacing:0}
+body.expert .simplified-hint{display:none}
+.lang{display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:inherit; letter-spacing:0}
+footer .lang{margin-left:auto}
+.lang button{appearance:none; border:0; background:transparent; cursor:pointer; padding:0; line-height:1;
+  color:var(--ghost); transition:color .15s; font-family:var(--mono); font-size:inherit; letter-spacing:0}
+.lang button:hover{color:var(--muted)}
+.lang button.on{color:var(--ink); font-weight:500}
+.lang .div{color:var(--line-2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+@media (max-width:900px){
+  .row::after{width:2px}
+  .row:hover .rowhead,.row.open .rowhead{transform:translateX(8px)}
+  .row:hover .rank,.row.open .rank{transform:translateX(3px)}
+}
+@media (max-width:600px){
+  .search .bar{flex-direction:column; align-items:stretch}
+  .go{width:100%; justify-content:center}
+  .go kbd{display:none}
+  .toolbar{flex-direction:column; align-items:flex-start; gap:18px}
+  .rowhead{display:grid; grid-template-columns:auto 1fr; gap:12px 14px}
+  .row:hover .rank,.row.open .rank{transform:none}
+  .row:hover .score,.row.open .score{transform:none}
+  .data{grid-column:1 / -1; width:100%; flex-direction:row; align-items:center; justify-content:space-between; flex-wrap:wrap; padding-top:2px}
+  .bartrack{width:48%; max-width:220px}
+  .modal-card{padding:24px 22px 20px}
+}
+
+/* ---- dark mode (D3 black, S70 pill) ---- */
+html.dark{
+  --bg:#0a0a0b; --panel:#131314; --surface:#19191b;
+  --ink:#e9e9ec; --muted:#94949d; --faint:#6b6b74; --ghost:#43434c;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.17);
+  --accent:#ff5c24; --accent-2:#ff9500; --accent-ink:#ff7a45; --accent-weak:rgba(255,92,36,.16);
+  --good:#ff5c24; --good-weak:rgba(255,92,36,.16);
+  --down:#6b6b74; --down-weak:rgba(255,255,255,.05);
+  --shadow:none; --shadow-lg:none}
+html.dark body{background:var(--bg)}
+html.dark body::after{opacity:.02; filter:invert(1)}
+html.dark .topbar{background:rgba(10,10,11,.85)}
+html.dark .seg{border-color:rgba(255,255,255,.16)}
+html.dark .seg button{color:#84848d}
+html.dark .seg button.on{color:#e58a68}
+html.dark .seg .pill{background:var(--panel); border-color:#e06a45; box-shadow:none}
+html.dark .subtitle{color:var(--muted)}
+html.dark .search,html.dark .querybox,html.dark .querybox.has-rewrites{box-shadow:none}
+html.dark .search,html.dark .querybox.has-rewrites{border-color:rgba(255,106,20,.22)}
+html.dark .search:focus-within{border-color:#c9601f; box-shadow:0 0 0 3px rgba(255,92,36,.07)}
+html.dark .querybox.has-rewrites .search:focus-within{box-shadow:inset 0 0 0 2px #c9601f}
+html.dark .chip.on .dot{background:linear-gradient(135deg,#cf7a22,#c93d1e); border-color:#c9601f}
+html.dark .go{background:linear-gradient(120deg,#cf7a22,#c43a1e); box-shadow:none; filter:brightness(.8)}
+html.dark .search:focus-within .go{filter:brightness(1)}
+html.dark .go:hover{filter:brightness(1.08)}
+html.dark .rewrites{background:#1a1410}
+html.dark .rewrites .body{border-top-color:rgba(255,122,47,.35)}
+html.dark .rw{border-bottom-color:#322a22}
+html.dark .snip{color:#bfbfc6}
+html.dark .meta,html.dark .meta .n,html.dark .rep .lbl{color:#9a9aa3}
+html.dark .spin{border-color:rgba(255,255,255,.18); border-top-color:var(--accent)}
+html.dark .row:hover .rank,html.dark .row.open .rank{background:linear-gradient(135deg,#cf7a22,#c93d1e); color:#f3ece6}
+html.dark .skel .b{background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.09),rgba(255,255,255,.05)); background-size:200% 100%}
+#darkbtn{color:var(--faint); display:inline-flex; align-items:center}
+#darkbtn:hover{color:var(--ink)}
+#darkbtn svg{width:16px;height:16px}
+</style>
+<script>try{if(localStorage.getItem("yt_theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}</script>
+</head>
+<body class="simplified">
+<div class="app">
+
+<main class="wrap">
+  <div class="titlerow">
+    <div class="titlecol">
+      <h1 class="pagetitle" data-i18n="brand">Is my problem new?</h1>
+      <p class="subtitle" data-i18n="subtitle">Find the most similar competitive programming problems.</p>
+    </div>
+    <div class="seg" id="seg"><span class="pill" id="pill"></span>
+      <button data-mode="simplified" class="on" data-i18n="simplified">Simplified</button>
+      <button data-mode="expert" data-i18n="expert">Expert</button>
+    </div>
+  </div>
+
+  <div class="querybox" id="querybox">
+    <form class="search" id="form" autocomplete="off">
+      <textarea id="q" rows="1" data-i18n-ph="placeholder" placeholder="Paste your statement here…"></textarea>
+      <div class="bar">
+        <div class="opts">
+          <button type="button" class="chip on expert-only" id="t-rewrite" role="switch" aria-checked="true">
+            <span data-i18n="rewrite">rewrite query</span>
+            <span class="dot"><svg viewBox="0 0 10 10"><path d="M1.5 5.2 4 7.5 8.5 2.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </button>
+          <button type="button" class="chip on expert-only" id="t-skipshort" role="switch" aria-checked="true">
+            <span data-i18n="skipshort">skip short statements</span>
+            <span class="dot"><svg viewBox="0 0 10 10"><path d="M1.5 5.2 4 7.5 8.5 2.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </button>
+        </div>
+        <button class="go" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg><span data-i18n="search">Search</span> <kbd>⌘↵</kbd></button>
+      </div>
+    </form>
+
+    <details class="rewrites" id="rwpanel" open style="display:none">
+      <summary><span class="tw">▸</span> <span data-i18n="qrw">query rewrites</span></summary>
+      <div class="body" id="rwbody"></div>
+    </details>
+  </div>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <div class="meta" id="meta"></div>
+    <div class="ctrls expert-only" id="ctrls">
+      <button class="tbtn" id="t-rerank"><span class="ic">⟲</span> <span data-i18n="rr_btn">rerank</span></button>
+      <span class="rep" id="rep"><span class="lbl" data-i18n="show">show</span>
+        <button data-rep="t0" class="on" data-i18n="rep_re1">re1</button>
+        <button data-rep="t1" data-i18n="rep_re2">re2</button>
+        <button data-rep="original" data-i18n="rep_orig">orig</button>
+      </span>
+    </div>
+  </div>
+  <ul class="results" id="results"></ul>
+  <div class="pager" id="pager" hidden></div>
+
+  <div class="empty" id="empty"><span data-i18n="empty1">Nothing searched yet.</span><div class="mono" data-i18n="empty2">paste a statement and press ⌘↵</div></div>
+</main>
+
+<footer>
+  <span id="f-emb">gemini-embedding-001</span><span class="sep"></span>
+  <span id="f-mode">cloud</span><span class="sep"></span>
+  <span><span id="f-n">254,940</span> <span data-i18n="foot_problems">problems</span></span><span class="sep"></span>
+  <button class="aboutlink" id="aboutbtn" data-i18n="about">about</button>
+  <div class="lang" id="lang"><button id="darkbtn" aria-label="toggle dark mode"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button><span class="div" style="margin:0 7px">|</span><button data-lang="en" class="on">EN</button><span class="div">/</span><button data-lang="zh">中文</button></div>
+</footer>
+
+<div class="modal" id="about" hidden>
+  <div class="modal-card">
+    <button class="modal-x" id="aboutclose" aria-label="close">×</button>
+    <div class="modal-body" id="about-body"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ---------- runtime data (filled from /api/search) ----------
+let RESULTS_BASE=[], RESULTS_RERANKED=null, REWRITES=null, TIMING={}, COST=0;
+const SIMPLE_REWRITE=true;    // simplified rewrites too (phrasing normalization); expert can still toggle it off
+let RW_OK=true;               // backend may report rewrite unavailable (offline box without the rewrite model)
+const SKEL=Array.from({length:5},()=>`<li class="skel">
+  <div class="b skel-rank"></div>
+  <div class="skel-main"><div class="b skel-title"></div>
+  <div class="b skel-sub"></div></div>
+  <div class="b skel-score"></div></li>`).join("");
+async function api(rerank){
+  const r=await fetch("/api/search",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({query:q.value.trim(), k:100, rewrite:RW_OK&&(S.mode==="expert"?S.rewrite:SIMPLE_REWRITE),
+                         skip_short:(S.mode==="expert"?S.skipshort:true), rerank})});
+  if(r.status===422) throw new Error("query too long (max 16,000 chars) or invalid parameters");
+  if(!r.ok) throw new Error("server "+r.status);
+  return r.json();
+}
+
+// ---------- i18n (voice borrowed from the original 原题机) ----------
+const I18N = {
+  en:{ brand:"Is my problem new?", subtitle:"Find the most similar competitive programming problems.", simplified:"Simplified", expert:"Expert",
+       placeholder:"Paste your statement here…",
+       rewrite:"rewrite query", skipshort:"skip short statements", search:"Search",
+       results:"results", m_embed:"embed", m_rewrite_embed:"rewrite + embed", m_rerank:"rerank",
+       m_top:"top-100 → Qwen3-8B",
+       rr_btn:"rerank", rr_busy:"reranking…", rr_done:"reranked",
+       show:"show", also_on:"also on", rep_re1:"rewrite1", rep_re2:"rewrite2", rep_orig:"original", qrw:"query rewrites",
+       t0_tag:"rewrite 1", t1_tag:"rewrite 2",
+       d_original:"original statement", d_t0:"rewrite 1", d_t1:"rewrite 2",
+       open_on:s=>`open on ${s} ↗`, empty1:"Nothing searched yet.", empty2:"paste a statement and press ⌘↵",
+       pg_prev:"‹ prev", pg_next:"next ›", pg_info:(a,b,t,p,q)=>`${a}–${b} of ${t} · page ${p}/${q}`,
+       foot_problems:"problems", about:"about",
+       about_html:`<p>This project is maintained by <a href="https://github.com/fjzzq2002" target="_blank" rel="noopener">@TLE</a>. You can find the open source version <a href="https://github.com/fjzzq2002/is-my-problem-new" target="_blank" rel="noopener">here</a>.</p><p>Consider <a href="https://buymeacoffee.com/fjzzq2002" target="_blank" rel="noopener">donating</a> if the project is helpful for you! All proceeds will be put into maintenance :)</p><p class="qq">QQ Discussion Group (for Chinese users): 829942060</p>` },
+  zh:{ brand:"原题机", subtitle:"原题在哪里啊，原题在这里~", simplified:"简洁", expert:"高级",
+       placeholder:"在这里粘贴你要搜索的题目…",
+       rewrite:"重写题面", skipshort:"跳过过短题面", search:"搜索",
+       results:"条结果", m_embed:"嵌入", m_rewrite_embed:"重写 + 嵌入", m_rerank:"重排",
+       m_top:"前 100 → Qwen3-8B",
+       rr_btn:"重排", rr_busy:"重排中…", rr_done:"已重排",
+       show:"显示", also_on:"也出现在", rep_re1:"重写1", rep_re2:"重写2", rep_orig:"原文", qrw:"题面重写",
+       t0_tag:"重写1", t1_tag:"重写2",
+       d_original:"原始题面", d_t0:"重写1", d_t1:"重写2",
+       open_on:s=>`在 ${s} 打开 ↗`, empty1:"尚未搜索。", empty2:"粘贴题面，按 ⌘↵ 开始搜索",
+       pg_prev:"‹ 上一页", pg_next:"下一页 ›", pg_info:(a,b,t,p,q)=>`第 ${a}–${b} 条 / 共 ${t} · 第 ${p}/${q} 页`,
+       foot_problems:"道题目", about:"关于",
+       about_html:`<p>本项目由 <a href="https://github.com/fjzzq2002" target="_blank" rel="noopener">@TLE</a> 维护。你可以在 <a href="https://github.com/fjzzq2002/is-my-problem-new" target="_blank" rel="noopener">这里</a> 找到开源版本。</p><p>服务器和运营成本都是 @TLE 自己掏的，所以如果你觉得这个项目对你有用欢迎 <a href="https://buymeacoffee.com/fjzzq2002" target="_blank" rel="noopener">捐助</a>！</p><p class="qq">QQ群：829942060，欢迎前来吹水对线！</p>` }
+};
+
+// ---------- state ----------
+const S = {lang:"zh", mode:"simplified", rewrite:true, skipshort:true, reranked:false, reranking:false, rep:"t0",
+           searched:false, page:1, size:20, open:new Set()};
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const t = k => I18N[S.lang][k];
+// language: ?lang= (from the old /en, /zh paths) > saved preference > zh
+try { const sv = localStorage.getItem("yt_lang");
+  if(sv==="en"||sv==="zh") S.lang = sv;
+} catch(e){}
+const _lp = new URLSearchParams(location.search).get("lang");
+if(_lp==="en"||_lp==="zh"){ S.lang=_lp; try{localStorage.setItem("yt_lang",_lp);}catch(e){}
+  history.replaceState(null,"",location.pathname); }
+
+function applyLang(){
+  const L = I18N[S.lang];
+  document.documentElement.lang = S.lang==="zh" ? "zh-CN" : "en";
+  document.title = L.brand;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ const v=L[el.dataset.i18n]; if(typeof v==="string") el.textContent=v; });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{ const v=L[el.dataset.i18nPh]; if(typeof v==="string") el.placeholder=v; });
+  $("#lang").querySelectorAll("[data-lang]").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
+  const ab=$("#about-body"); if(ab) ab.innerHTML=L.about_html;
+  movePill();
+}
+
+// mode toggle
+const seg = $("#seg"), pill = $("#pill");
+function movePill(){const on=seg.querySelector("button.on"); pill.style.left=on.offsetLeft+"px"; pill.style.width=on.offsetWidth+"px";}
+seg.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+  seg.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); movePill();
+  S.mode=b.dataset.mode; document.body.className=S.mode;
+  try { localStorage.setItem("yt_mode", S.mode); } catch(e){}
+  if(S.searched) render({animate:false});
+}));
+// mode: saved preference > simplified
+try { const sm = localStorage.getItem("yt_mode");
+  if(sm==="expert"||sm==="simplified") S.mode = sm;
+} catch(e){}
+document.body.className = S.mode;
+seg.querySelectorAll("button").forEach(x=>x.classList.toggle("on", x.dataset.mode===S.mode));
+window.addEventListener("load",applyLang); window.addEventListener("resize",movePill);
+
+// dark mode toggle (☾/☀), saved like the language
+const darkbtn = $("#darkbtn");
+const MOON='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>', SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.3 11.3 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.3-11.3 1.4-1.4"/></svg>';
+function syncDark(){ darkbtn.innerHTML = document.documentElement.classList.contains("dark") ? SUN : MOON; }
+darkbtn.addEventListener("click",()=>{
+  const on = document.documentElement.classList.toggle("dark");
+  try { localStorage.setItem("yt_theme", on ? "dark" : "light"); } catch(e){}
+  syncDark();
+});
+syncDark();
+
+// language toggle
+$("#lang").querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>{
+  if(S.lang===b.dataset.lang) return;
+  S.lang=b.dataset.lang;
+  try { localStorage.setItem("yt_lang", S.lang); } catch(e){}
+  applyLang(); if(S.searched) render({animate:false});
+}));
+
+// about modal
+$("#aboutbtn").addEventListener("click",()=>{ $("#about").hidden=false; });
+$("#aboutclose").addEventListener("click",()=>{ $("#about").hidden=true; });
+$("#about").addEventListener("click",e=>{ if(e.target.id==="about") $("#about").hidden=true; });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#about").hidden) $("#about").hidden=true; });
+
+// rewrite toggle (in search box) + rerank toggle (in toolbar)
+$("#t-rewrite").addEventListener("click",function(){   // affects the NEXT query only, not current results
+  S.rewrite=!S.rewrite; this.classList.toggle("on",S.rewrite); this.setAttribute("aria-checked",S.rewrite);
+});
+$("#t-skipshort").addEventListener("click",function(){ // affects the NEXT query only, not current results
+  S.skipshort=!S.skipshort; this.classList.toggle("on",S.skipshort); this.setAttribute("aria-checked",S.skipshort);
+});
+$("#t-rerank").addEventListener("click",async ()=>{
+  if(S.reranking) return;
+  if(S.reranked){ S.reranked=false; S.page=1; render(); return; }         // back to cosine (cached)
+  if(RESULTS_RERANKED){ S.reranked=true; S.page=1; render(); return; }     // cached rerank, no re-query
+  S.reranking=true; render({animate:false});
+  try{ const d=await api(true);
+    RESULTS_RERANKED=d.results||[]; REWRITES=d.rewrites||REWRITES;
+    TIMING=Object.assign({},TIMING,{rerank:(d.timing||{}).rerank}); COST=d.cost||0;
+    S.reranked=true; S.reranking=false; S.page=1; render();
+  }catch(e){ S.reranking=false; render(); }
+});
+
+// representation switch
+$("#rep").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+  S.rep=b.dataset.rep; $("#rep").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+  if(S.searched) render({animate:false});
+}));
+
+// textarea
+const q=$("#q");
+q.addEventListener("input",()=>{q.style.height="auto"; q.style.height=Math.min(q.scrollHeight,260)+"px";});
+q.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){e.preventDefault();$("#form").requestSubmit();}});
+$("#form").addEventListener("submit",e=>{e.preventDefault(); doSearch();});
+window.addEventListener("load",()=>q.focus());
+// footer reflects what the server is actually running; offline (local) backends have no reranker
+fetch("/api/health").then(r=>r.json()).then(h=>{
+  $("#f-emb").textContent = (h.models&&h.models.embed||"").split("/").pop() || (h.emb==="gemini"?"gemini-embedding-001":"qwen3-embedding-8b");
+  $("#f-mode").textContent = h.backend || "cloud";
+  if(h.problems) $("#f-n").textContent = h.problems.toLocaleString("en-US");
+  if(h.rerank===false) $("#t-rerank").style.display="none";
+  if(h.rewrite===false){ RW_OK=false; $("#t-rewrite").style.display="none"; }
+}).catch(()=>{});
+
+// delegated: expand rows
+$("#results").addEventListener("click",e=>{
+  if(e.target.closest("a")) return;
+  const head=e.target.closest(".rowhead"); if(!head) return;
+  const li=head.closest(".row"), uid=li.dataset.uid;
+  li.classList.toggle("open");
+  S.open.has(uid)?S.open.delete(uid):S.open.add(uid);
+});
+// delegated: pager
+$("#pager").addEventListener("click",e=>{
+  const b=e.target.closest(".pg"); if(!b||b.disabled) return;
+  S.page += (b.dataset.dir==="next"?1:-1); render();
+  $("#toolbar").scrollIntoView({behavior:"smooth", block:"start"});
+});
+
+async function doSearch(){
+  if(!q.value.trim()){q.focus(); return;}
+  Object.assign(S,{searched:true, reranked:false, reranking:false, page:1}); S.open.clear();
+  $("#empty").style.display="none"; $("#toolbar").hidden=true; $("#pager").hidden=true;
+  $("#results").innerHTML=SKEL;
+  try{
+    const d=await api(false);
+    RESULTS_BASE=d.results||[]; RESULTS_RERANKED=null; REWRITES=d.rewrites;
+    TIMING={embed:(d.timing||{}).embed, rerank:null}; COST=0;
+    document.documentElement.classList.add("wide");   // landing is a centered column; results unlock full width
+    render({animate:true});
+  }catch(e){ $("#results").innerHTML=`<li style="padding:26px 8px;color:var(--muted);font-family:var(--mono);font-size:21px">search failed — ${esc(String(e.message||e))}</li>`; }
+}
+
+function render({animate=true}={}){
+  const expert = S.mode==="expert";
+  const useRerank = expert && S.reranked && RESULTS_RERANKED;
+  const rep = expert ? S.rep : "t0";   // simplified prioritizes 重写1 (re1)
+  // simplified always shows cosine order; rerank only in expert (cached, no re-query)
+  const ordered = useRerank ? RESULTS_RERANKED : RESULTS_BASE;
+  const total=ordered.length, pages=Math.max(1,Math.ceil(total/S.size));
+  S.page=Math.min(Math.max(1,S.page),pages);
+  const start=(S.page-1)*S.size, slice=ordered.slice(start,start+S.size);
+
+  // query rewrite panel — expert only, when rewrite on
+  const rw=$("#rwpanel");
+  if(expert && REWRITES){rw.style.display="block"; rw.open=true;
+    $("#querybox").classList.add("has-rewrites");
+    $("#rwbody").innerHTML=`<div class="rw"><span class="tag">${t("t0_tag")}</span><p>${esc(REWRITES.t0||"")}</p></div>
+      <div class="rw"><span class="tag">${t("t1_tag")}</span><p>${esc(REWRITES.t1||"")}</p></div>`;
+  } else {rw.style.display="none"; $("#querybox").classList.remove("has-rewrites");}
+
+  // toolbar + meta
+  $("#toolbar").hidden=false;
+  let bits=[`<span class="n"><b>${total}</b>${t("results")}</span>`];
+  if(expert){
+    bits.push(`<span class="sep"></span><span>${REWRITES?t("m_rewrite_embed"):t("m_embed")} <b>${TIMING.embed!=null?TIMING.embed+"s":"—"}</b></span>`);
+    if(useRerank){ bits.push(`<span class="sep"></span><span>${t("m_rerank")} <b>${TIMING.rerank!=null?TIMING.rerank+"s":"—"}</b></span>`,`<span class="sep"></span><span>${t("m_top")}</span>`);
+    }
+  }
+  $("#meta").innerHTML=bits.join("");
+
+  // sync expert control buttons
+  $("#t-rewrite").classList.toggle("on", S.rewrite);
+  $("#t-skipshort").classList.toggle("on", S.skipshort);
+  const rr=$("#t-rerank");
+  if(S.reranking){ rr.className="tbtn busy"; rr.innerHTML=`<span class="spin"></span> ${t("rr_busy")}`; }
+  else if(S.reranked){ rr.className="tbtn on"; rr.innerHTML=`<span class="ic">✓</span> ${t("rr_done")}`; }
+  else { rr.className="tbtn"; rr.innerHTML=`<span class="ic">⟲</span> ${t("rr_btn")}`; }
+  $("#rep").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.rep===S.rep));
+
+  // rows
+  $("#results").innerHTML=slice.map((d,i)=>{
+    const fin=start+i+1, base=(d.base_rank||fin), mv=base-fin;
+    const text=d[rep]||d.original;
+    const pct=v=>Math.max(0,Math.min(100,Math.round(v*100)));
+    const moveChip=useRerank?`<span class="move ${mv>0?'up':mv<0?'dn':'eq'}">${base}<span style="opacity:.6">→</span>${fin}${mv>0?' ▲':mv<0?' ▼':''}</span>`:"";
+    const data=useRerank
+      ? `<div class="score"><span class="lbl">rr</span>${(d.rr||0).toFixed(3)}</div>
+         <div class="bartrack"><div class="barfill" data-w="${pct(d.rr||0)}"></div></div>
+         <div class="xtra"><span class="rr">cos <b>${(d.cos||0).toFixed(3)}</b></span></div>
+         <div class="xtra">${moveChip}</div>`
+      : `<div class="score"><span class="lbl">cos</span>${(d.cos||0).toFixed(3)}</div>
+         <div class="bartrack"><div class="barfill" data-w="${pct(d.cos||0)}"></div></div>`;
+    return `<li class="row ${S.open.has(d.uid)?'open':''}" data-uid="${d.uid}" style="${animate?`animation-delay:${i*34}ms`:'animation:none'}">
+      <div class="rowhead">
+        <div class="rank">${String(fin).padStart(2,'0')}</div>
+        <div class="main">
+          <a class="title" href="${d.url}" target="_blank" rel="noopener">${esc(d.title)}</a>
+          <div class="sub"><span class="src">${esc(d.src)}</span><span class="uid">/ ${esc(d.uid)}</span></div>
+          ${(d.also&&d.also.length)?`<div class="also">${t("also_on")} ${d.also.slice(0,4).map(a=>`<a href="${a.url}" target="_blank" rel="noopener">${esc(a.uid)}</a>`).join('<span class="d">·</span>')}${d.also.length>4?` <span class="more">+${d.also.length-4}</span>`:""}</div>`:""}
+          <div class="snip">${esc(text)}</div>
+          <a class="ojlink" href="${d.url}" target="_blank" rel="noopener">${t("open_on")(d.src)}</a>
+        </div>
+        <div class="data">${data}</div>
+      </div>
+    </li>`;
+  }).join("");
+  requestAnimationFrame(()=>document.querySelectorAll(".barfill").forEach(b=>b.style.width=b.dataset.w+"%"));
+
+  // pager
+  const pg=$("#pager");
+  if(pages>1){pg.hidden=false;
+    pg.innerHTML=`<button class="pg" data-dir="prev" ${S.page===1?"disabled":""}>${t("pg_prev")}</button>
+      <span class="pgnum">${t("pg_info")(start+1,Math.min(start+S.size,total),total,S.page,pages)}</span>
+      <button class="pg" data-dir="next" ${S.page===pages?"disabled":""}>${t("pg_next")}</button>`;
+  } else pg.hidden=true;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.env
+api_stats.jsonl
+problems.jsonl
+emb/
+emb_gemini/
+gen/rewrites.jsonl
+__pycache__/
+*.pyc
+.DS_Store
