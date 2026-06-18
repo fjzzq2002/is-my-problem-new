@@ -14,6 +14,7 @@ import numpy as np, requests
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, Field
+from typing import Optional, List
 import uvicorn
 
 UI   = os.path.dirname(os.path.abspath(__file__))
@@ -218,12 +219,14 @@ def mkrow(u, cos, rr, base_rank, also=None):
             "also": [{"uid": x, "url": (meta.get(x, {}).get("url") or "#")} for x in (also or [])[:8]],
             "original": orig, "t0": rdoc.get(u) or orig, "t1": t1doc.get(u) or rdoc.get(u) or orig}
 
-def collapse(order_idx, sims, limit, skip=None):
-    """Walk ranked rows, keep one per exact-duplicate group; mirrors ride along on the kept row."""
+def collapse(order_idx, sims, limit, skip=None, allow=None):
+    """Walk ranked rows, keep one per exact-duplicate group; mirrors ride along on the kept row.
+    allow: if set, only keep rows whose source OJ is in it (so the top-k is pulled from those OJs)."""
     kept = []; seen_g = set()
     for i in order_idx:
         u = uids[int(i)]
         if skip and u in skip: continue
+        if allow is not None and (meta.get(u, {}).get("source") not in allow): continue
         g = DUP.get(u)
         if g:
             if g[0] in seen_g: continue
@@ -233,6 +236,22 @@ def collapse(order_idx, sims, limit, skip=None):
         kept.append((u, float(sims[int(i)]), also))
         if len(kept) >= limit: break
     return kept
+
+def source_hist(order_idx, skip, cap=1000):
+    """Per-OJ match counts over the top `cap` deduped results (ignores the source filter) —
+    populates the filter UI with the OJs that actually matched this query, biggest first."""
+    c = {}; seen_g = set(); n = 0
+    for i in order_idx:
+        u = uids[int(i)]
+        if skip and u in skip: continue
+        g = DUP.get(u)
+        if g:
+            if g[0] in seen_g: continue
+            seen_g.add(g[0])
+        s = meta.get(u, {}).get("source") or "?"
+        c[s] = c.get(s, 0) + 1; n += 1
+        if n >= cap: break
+    return dict(sorted(c.items(), key=lambda kv: -kv[1]))
 
 # ---- warm up so the first user query is fast (cloud: connection pool; local: ollama model load) ----
 try:
@@ -251,6 +270,7 @@ if os.path.isdir(os.path.join(UI, "fonts")):   # self-hosted font fallback (used
 class SearchReq(BaseModel):
     query: str = Field(..., max_length=16000)   # LAN-exposed: bound rewrite/embed cost per request
     k: int = Field(50, ge=1, le=200); rewrite: bool = False; rerank: bool = False; skip_short: bool = True
+    sources: Optional[List[str]] = None   # inclusion filter by OJ; None/[] = all OJs (3.8-safe annotation)
 
 @app.get("/")
 def index(): return FileResponse(os.path.join(UI, "index.html"))
@@ -315,7 +335,10 @@ def search(req: SearchReq):
         qv, rewrites, qv_cached = query_vec_cached(q, do_rewrite); te = time.time() - t0
         sims = cosine_all(qv)
         cost = 0.0; rr_time = 0.0
-        ranked = collapse(np.argsort(-sims), sims, RPOOL if do_rerank else req.k, SHORT if req.skip_short else None)
+        order = np.argsort(-sims); skip = SHORT if req.skip_short else None
+        allow = set(req.sources) if req.sources else None
+        ranked = collapse(order, sims, RPOOL if do_rerank else req.k, skip, allow)
+        src_counts = source_hist(order, skip)
         if do_rerank:
             cu = [u for u, _, _ in ranked]; ccos = [c for _, c, _ in ranked]; calso = [a for _, _, a in ranked]
             tr = time.time(); rr, cost = rerank(q, cu); rr_time = time.time() - tr
@@ -327,6 +350,7 @@ def search(req: SearchReq):
             rows = [mkrow(u, c, None, p + 1, a) for p, (u, c, a) in enumerate(ranked)]
             reranked = False
         return {"results": rows, "rewrites": rewrites, "reranked": reranked, "backend": BACKEND,
+                "src_counts": src_counts,
                 "timing": {"embed": round(te, 2), "rerank": round(rr_time, 2), "total": round(time.time() - t0, 2)},
                 "cost": round(cost, 4)}
     except Exception:

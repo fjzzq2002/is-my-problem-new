@@ -107,11 +107,35 @@ html.wide .wrap,html.wide footer{max-width:100%}
 /* results toolbar */
 .toolbar{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
   padding:clamp(30px,2.13vw,31px) 2px clamp(22px,1.74vw,25px)}
-.meta{display:flex; align-items:center; gap:clamp(12px,1.04vw,15px); flex-wrap:wrap; font-family:var(--sans); font-size:14px;
-  color:#6c6c72; letter-spacing:0}
+.meta{min-width:0; font-family:var(--sans); font-size:14px; color:#6c6c72; letter-spacing:0}
+.meta .tm{font-family:var(--mono); font-size:13px; color:var(--faint)}
 .meta .n{color:#6c6c72; font-weight:500}.meta .n b{color:var(--accent-ink); font-size:20px; font-weight:700; margin-right:10px}
 .meta b{color:var(--ink); font-weight:700}
 .meta .sep{width:1px; height:18px; background:var(--line-2)}
+/* OJ filter — popover button in the expert controls row */
+.ojwrap{position:relative; display:inline-flex; padding-left:18px; border-left:1px solid var(--line-2)}
+.ojbtn{display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:0 13px; border:1px solid var(--line-2);
+  border-radius:9px; background:var(--panel); font-family:var(--mono); font-size:13.5px; color:var(--ink); cursor:pointer;
+  transition:border-color .14s, color .14s, background .14s}
+.ojbtn:hover{border-color:var(--ghost)}
+.ojbtn.on{border-color:var(--accent); color:var(--accent-ink); background:var(--accent-weak)}
+.ojbtn .n{background:var(--accent); color:#fff; border-radius:6px; font-size:11.5px; padding:1px 6px; font-weight:600}
+.ojpop{position:absolute; z-index:40; top:calc(100% + 8px); right:0; width:290px; background:var(--panel);
+  border:1.5px solid var(--line-2); border-radius:12px; box-shadow:var(--shadow-lg); padding:10px; font-family:var(--mono); text-align:left}
+.ojpop .sb{width:100%; height:34px; border:1.5px solid var(--line-2); border-radius:8px; padding:0 10px;
+  font-family:var(--mono); font-size:13px; margin-bottom:8px; background:var(--panel); color:var(--ink); outline:none}
+.ojpop .sb:focus{border-color:var(--accent)}
+.ojpop .acts{display:flex; gap:14px; font-size:12px; color:var(--accent-ink); margin:0 2px 8px}
+.ojpop .acts span{cursor:pointer}
+.ojpop .lst{max-height:280px; overflow:auto; display:flex; flex-direction:column}
+.ojrow{display:flex; align-items:center; gap:9px; padding:6px; border-radius:7px; cursor:pointer; font-size:13.5px; color:var(--ink)}
+.ojrow:hover{background:var(--surface)}
+.ojrow .ck{width:18px; height:18px; border-radius:5px; border:1.5px solid var(--ghost); display:grid; place-items:center; flex:none}
+.ojrow.on .ck{background:linear-gradient(135deg,var(--accent-2),var(--accent)); border-color:var(--accent)}
+.ojrow.on .ck::after{content:""; width:9px; height:9px; clip-path:polygon(14% 52%,0 66%,40% 100%,100% 26%,86% 12%,38% 70%); background:#fff}
+.ojrow .nm{flex:1} .ojrow .ct{color:var(--faint); font-size:12px}
+.ojrow[hidden]{display:none}
+html.dark .ojbtn.on{border-color:#c9601f; color:#e58a68; background:rgba(255,92,36,.14)}
 .rep{display:flex; align-items:center; gap:2px}
 .rep .lbl{color:#6c6c72; margin-right:11px; letter-spacing:0; text-transform:none; font-size:14px; font-family:var(--sans)}
 .rep button{appearance:none; border:1px solid rgba(18,18,28,.14); background:var(--panel); color:#48484e;
@@ -362,6 +386,7 @@ html.dark .skel .b{background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(2
     <div class="meta" id="meta"></div>
     <div class="ctrls expert-only" id="ctrls">
       <button class="tbtn" id="t-rerank"><span class="ic">⟲</span> <span data-i18n="rr_btn">rerank</span></button>
+      <span class="ojwrap" id="ojwrap"><button class="ojbtn" id="ojbtn"></button></span>
       <span class="rep" id="rep"><span class="lbl" data-i18n="show">show</span>
         <button data-rep="t0" class="on" data-i18n="rep_re1">re1</button>
         <button data-rep="t1" data-i18n="rep_re2">re2</button>
@@ -404,7 +429,8 @@ const SKEL=Array.from({length:5},()=>`<li class="skel">
 async function api(rerank){
   const r=await fetch("/api/search",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({query:q.value.trim(), k:100, rewrite:RW_OK&&(S.mode==="expert"?S.rewrite:SIMPLE_REWRITE),
-                         skip_short:(S.mode==="expert"?S.skipshort:true), rerank})});
+                         skip_short:(S.mode==="expert"?S.skipshort:true),
+                         sources:(S.sources.length?S.sources:undefined), rerank})});
   if(r.status===422) throw new Error("query too long (max 16,000 chars) or invalid parameters");
   if(!r.ok) throw new Error("server "+r.status);
   return r.json();
@@ -415,7 +441,7 @@ const I18N = {
   en:{ brand:"Is my problem new?", subtitle:"Find the most similar competitive programming problems.", simplified:"Simplified", expert:"Expert",
        placeholder:"Paste your statement here…",
        rewrite:"rewrite query", skipshort:"skip short statements", search:"Search",
-       results:"results", m_embed:"embed", m_rewrite_embed:"rewrite + embed", m_rerank:"rerank",
+       results:"results", oj_filter:"filter by OJ", oj_search:"search OJ…", oj_clear:"clear", m_embed:"embed", m_rewrite_embed:"rewrite + embed", m_rerank:"rerank",
        m_top:"top-100 → Qwen3-8B",
        rr_btn:"rerank", rr_busy:"reranking…", rr_done:"reranked",
        show:"show", also_on:"also on", rep_re1:"rewrite1", rep_re2:"rewrite2", rep_orig:"original", qrw:"query rewrites",
@@ -428,7 +454,7 @@ const I18N = {
   zh:{ brand:"原题机", subtitle:"原题在哪里啊，原题在这里~", simplified:"简洁", expert:"高级",
        placeholder:"在这里粘贴你要搜索的题目…",
        rewrite:"重写题面", skipshort:"跳过过短题面", search:"搜索",
-       results:"条结果", m_embed:"嵌入", m_rewrite_embed:"重写 + 嵌入", m_rerank:"重排",
+       results:"条结果", oj_filter:"按 OJ 筛选", oj_search:"搜索 OJ…", oj_clear:"清空", m_embed:"嵌入", m_rewrite_embed:"重写 + 嵌入", m_rerank:"重排",
        m_top:"前 100 → Qwen3-8B",
        rr_btn:"重排", rr_busy:"重排中…", rr_done:"已重排",
        show:"显示", also_on:"也出现在", rep_re1:"重写1", rep_re2:"重写2", rep_orig:"原文", qrw:"题面重写",
@@ -442,7 +468,8 @@ const I18N = {
 
 // ---------- state ----------
 const S = {lang:"zh", mode:"simplified", rewrite:true, skipshort:true, reranked:false, reranking:false, rep:"t0",
-           searched:false, page:1, size:20, open:new Set()};
+           searched:false, page:1, size:20, open:new Set(), sources:[], ojOpen:false};
+let SRC_COUNTS = {};   // {oj: match-count} for the current query, populates the OJ filter chips
 const $ = s => document.querySelector(s);
 const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const t = k => I18N[S.lang][k];
@@ -564,17 +591,68 @@ $("#pager").addEventListener("click",e=>{
 
 async function doSearch(){
   if(!q.value.trim()){q.focus(); return;}
-  Object.assign(S,{searched:true, reranked:false, reranking:false, page:1}); S.open.clear();
+  Object.assign(S,{searched:true, reranked:false, reranking:false, page:1, sources:[], ojOpen:false}); S.open.clear();
   $("#empty").style.display="none"; $("#toolbar").hidden=true; $("#pager").hidden=true;
   $("#results").innerHTML=SKEL;
   try{
     const d=await api(false);
-    RESULTS_BASE=d.results||[]; RESULTS_RERANKED=null; REWRITES=d.rewrites;
+    RESULTS_BASE=d.results||[]; RESULTS_RERANKED=null; REWRITES=d.rewrites; SRC_COUNTS=d.src_counts||{};
     TIMING={embed:(d.timing||{}).embed, rerank:null}; COST=0;
     document.documentElement.classList.add("wide");   // landing is a centered column; results unlock full width
     render({animate:true});
   }catch(e){ $("#results").innerHTML=`<li style="padding:26px 8px;color:var(--muted);font-family:var(--mono);font-size:21px">search failed — ${esc(String(e.message||e))}</li>`; }
 }
+
+// OJ filter — popover button (mock A): searchable checklist with per-OJ match counts.
+// Nothing selected = all OJs. Expert only.
+function syncOJBtn(){
+  const n=S.sources.length, b=$("#ojbtn");
+  b.classList.toggle("on", n>0);
+  b.title=t("oj_filter");
+  b.innerHTML = `<span style="font-size:15px;line-height:1">⛃</span> OJ` + (n? ` <span class="n">${n}</span>`:"");
+}
+
+async function requeryOJ(){   // filter changed → re-query (reuses cached query vector); drop rerank state (option 1)
+  S.reranked=false; RESULTS_RERANKED=null; S.reranking=false; S.page=1; S.open.clear();
+  syncOJBtn();
+  $("#results").innerHTML=SKEL; $("#pager").hidden=true;
+  try{
+    const d=await api(false);
+    RESULTS_BASE=d.results||[]; SRC_COUNTS=d.src_counts||SRC_COUNTS;
+    TIMING={embed:(d.timing||{}).embed, rerank:null};
+    render({animate:false});
+  }catch(e){ $("#results").innerHTML=`<li style="padding:26px 8px;color:var(--muted);font-family:var(--mono);font-size:21px">search failed — ${esc(String(e.message||e))}</li>`; }
+}
+
+function closeOJPop(){ const p=$("#ojpop"); if(p) p.remove(); }
+function openOJPop(){
+  closeOJPop();
+  const ents=Object.entries(SRC_COUNTS), sel=new Set(S.sources);
+  if(!ents.length) return;
+  const rows=ents.map(([s,c])=>`<div class="ojrow${sel.has(s)?" on":""}" data-oj="${esc(s)}"><span class="ck"></span><span class="nm">${esc(s)}</span><span class="ct">${c}</span></div>`).join("");
+  const pop=document.createElement("div"); pop.className="ojpop"; pop.id="ojpop";
+  pop.innerHTML=`<input class="sb" id="ojsearch" placeholder="${t("oj_search")}" autocomplete="off"><div class="acts"><span data-act="clear">${t("oj_clear")}</span></div><div class="lst">${rows}</div>`;
+  $("#ojwrap").appendChild(pop);
+  // viewport-aware placement: right-align to the button, but clamp inside the screen (toolbar wraps on small screens)
+  const b=$("#ojbtn").getBoundingClientRect(), popW=Math.min(290, window.innerWidth-16);
+  pop.style.position="fixed"; pop.style.right="auto"; pop.style.width=popW+"px";
+  pop.style.left=Math.max(8, Math.min(b.right-popW, window.innerWidth-popW-8))+"px";
+  pop.style.top=(b.bottom+8)+"px";
+  pop.querySelector(".lst").style.maxHeight=Math.max(120, window.innerHeight-b.bottom-72)+"px";
+  const sb=$("#ojsearch"); sb.focus();
+  sb.addEventListener("input",()=>{ const v=sb.value.trim().toLowerCase();
+    pop.querySelectorAll(".ojrow").forEach(r=>{ r.hidden = !!v && !r.dataset.oj.toLowerCase().includes(v); }); });
+  pop.addEventListener("click",e=>{
+    const act=e.target.closest("[data-act]");
+    if(act){ if(act.dataset.act==="clear" && S.sources.length){ S.sources=[]; pop.querySelectorAll(".ojrow.on").forEach(r=>r.classList.remove("on")); requeryOJ(); } return; }
+    const row=e.target.closest(".ojrow"); if(!row) return;
+    const oj=row.dataset.oj, i=S.sources.indexOf(oj);
+    if(i>=0){ S.sources.splice(i,1); row.classList.remove("on"); } else { S.sources.push(oj); row.classList.add("on"); }
+    requeryOJ();
+  });
+}
+$("#ojbtn").addEventListener("click", e=>{ e.stopPropagation(); $("#ojpop") ? closeOJPop() : openOJPop(); });
+document.addEventListener("click", e=>{ if($("#ojpop") && !e.target.closest("#ojwrap")) closeOJPop(); });
 
 function render({animate=true}={}){
   const expert = S.mode==="expert";
@@ -594,15 +672,14 @@ function render({animate=true}={}){
       <div class="rw"><span class="tag">${t("t1_tag")}</span><p>${esc(REWRITES.t1||"")}</p></div>`;
   } else {rw.style.display="none"; $("#querybox").classList.remove("has-rewrites");}
 
-  // toolbar + meta
+  // toolbar: simplified shows just the result count; expert adds timing + OJ filter + rerank/view controls
   $("#toolbar").hidden=false;
-  let bits=[`<span class="n"><b>${total}</b>${t("results")}</span>`];
   if(expert){
-    bits.push(`<span class="sep"></span><span>${REWRITES?t("m_rewrite_embed"):t("m_embed")} <b>${TIMING.embed!=null?TIMING.embed+"s":"—"}</b></span>`);
-    if(useRerank){ bits.push(`<span class="sep"></span><span>${t("m_rerank")} <b>${TIMING.rerank!=null?TIMING.rerank+"s":"—"}</b></span>`,`<span class="sep"></span><span>${t("m_top")}</span>`);
-    }
+    $("#meta").innerHTML = (TIMING.embed!=null) ? `<span class="tm">${REWRITES?t("m_rewrite_embed"):t("m_embed")} ${TIMING.embed}s${useRerank&&TIMING.rerank!=null?" · "+t("m_rerank")+" "+TIMING.rerank+"s":""}</span>` : "";
+    syncOJBtn();
+  } else {
+    $("#meta").innerHTML = `<span class="n"><b>${total}</b>${t("results")}</span>`;
   }
-  $("#meta").innerHTML=bits.join("");
 
   // sync expert control buttons
   $("#t-rewrite").classList.toggle("on", S.rewrite);
