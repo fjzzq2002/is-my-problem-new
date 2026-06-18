@@ -86,10 +86,11 @@ CENT_D = os.path.join(ROOT, "emb_gemini") if EMODEL == "gemini" else EMB   # cen
 DIM = 3072 if EMODEL == "gemini" else 4096
 uids = json.load(open(os.path.join(CENT_D, "centroid_uids.json"))); P = len(uids)
 cent = np.memmap(os.path.join(CENT_D, "centroids.f16"), dtype=np.float16, mode="r", shape=(P, DIM))  # ~1.6-2GB, lazy
+CHUNK = 8000  # rows cast f16->f32 per step; small so concurrent searches don't blow up RAM (50k*3072*4≈614MB each)
 def cosine_all(qv):
     sims = np.empty(P, dtype=np.float32)
-    for s in range(0, P, 50000):
-        e = min(s + 50000, P); sims[s:e] = np.asarray(cent[s:e], dtype=np.float32) @ qv
+    for s in range(0, P, CHUNK):
+        e = min(s + CHUNK, P); sims[s:e] = np.asarray(cent[s:e], dtype=np.float32) @ qv
     return sims
 meta = {}
 for ln in open(os.path.join(EMB, "meta.jsonl"), encoding="utf-8"):
